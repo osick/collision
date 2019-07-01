@@ -1,0 +1,16 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+data/test/
+data/val/
+data/train/
+data/full/
+.doc/
+.scripts/
+logs/
+models/
+
+# files
+*.py[cod]
+*$py.class
+*.log
+cplib/*.log
