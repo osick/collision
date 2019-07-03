@@ -4,8 +4,6 @@ data/test/
 data/val/
 data/train/
 data/full/
-.doc/
-.scripts/
 logs/
 models/
 

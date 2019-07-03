@@ -1,33 +1,22 @@
-# CPNN
+# Collision
 
-**Chess Problem Neural Network** (CPNN) is a proof of concept for a neural network which is able to detect and develop "good" chess problems,
-  something like "mate in two" or "helpmate in 3"
-
-## Technical Intro
-  todo
+**Collsion** Proof of concept for a neural network to detect collsions of bodies. For training, validation and testing we us Blender generated images (size: 540 x 540 x 3) of cubes.
 
 ## Usage
-  todo
+```shell
+usage: collision.py [-h] [--shuffle] [--ptrain PTRAIN] [--pval PVAL]
+                    [--ptest PTEST] [--epochs EPOCHS] [--training] [--testing]
+
+optional arguments:
+  -h, --help       show this help message and exit
+  --shuffle        shuffle the data before processing
+  --ptrain PTRAIN  training percentage
+  --pval PVAL      validation percentage
+  --ptest PTEST    test percentage
+  --epochs EPOCHS  number of epochs
+  --training       call the training function
+  --testing        call the testing function
+```
 
 ## Credits
   todo
-  
-  - [x] Test
-  - [ ] Test2
-  
-  H1        | H2
-  ----------| ---------
-  Content   | Content2
-  Content   | Content2
-  Content     | Content2
-  
-```javascript
-function fibonacci (a,b){
-   return a+b
-}
-```
-
-```Python
-def fibonacci (a,b):
-    return a+b
-```
