@@ -9,7 +9,7 @@ data_path           = "./data"
 model_filepath      = model_path+'/model.h5'
 weights_filepath    = model_path+'/weights.h5'
 stages              = {"train":data_path+"/train",   "val":data_path+"/val",   "test":data_path+"/test"}
-img_data            = {"img_width":270, "img_height":270, "channels":3}
+img_data            = {"img_width":108, "img_height":108, "channels":3}
 
 # Parser setup
 import argparse
@@ -57,25 +57,23 @@ from keras import callbacks
 # make tf not so noisy
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-
 def define_model():    
     '''
     LeNet type CNN model
     '''
-    model = Sequential()
-    model.add(Conv2D(40, (3, 3), input_shape=(img_data["img_width"],img_data["img_height"],img_data["channels"]), activation="relu"))
+    model=Sequential()
+    model.add(Conv2D(48,(3,3),input_shape=(img_data["img_width"],img_data["img_height"],img_data["channels"]),activation="relu"))
     model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Conv2D(20, (3, 3), activation="relu"))
-    model.add(MaxPooling2D(pool_size=(2, 2), data_format="channels_first"))
+    model.add(Conv2D(16,(3,3),activation="relu"))
+    model.add(MaxPooling2D(pool_size=(2, 2),data_format="channels_first"))
     model.add(Flatten())
-    model.add(Dense(units=256, activation="relu"))
-    model.add(Dropout(0.2))
-    model.add(Dense(units=32, activation="relu"))
-    model.add(Dropout(0.2))
-    model.add(Dense(3, activation='softmax'))
-    model.compile(loss='categorical_crossentropy', optimizer="adam", metrics=['accuracy'])
+    model.add(Dense(units=256,activation="relu"))
+    model.add(Dropout(0.25))
+    model.add(Dense(units=32,activation="relu"))
+    model.add(Dropout(0.25))
+    model.add(Dense(3,activation='softmax'))
+    model.compile(loss='categorical_crossentropy',optimizer="adam",metrics=['accuracy'])
     return model
-
 
 # def define_model-94%():    
 #     '''
@@ -130,7 +128,7 @@ def training():
     '''
     train the model
     '''
-    epochs = 8
+    epochs = 12
     if args.epochs: epochs=args.epochs
     train_datagen   = ImageDataGenerator( rescale = 1./255)
     train_generator = train_datagen.flow_from_directory(stages["train"], target_size=(img_data["img_width"], img_data["img_height"]), batch_size=32, class_mode='categorical')
@@ -180,6 +178,8 @@ def predict(filepath):
     arr=model.predict(np.expand_dims(img_to_array(x), axis=0))
     logger.info(arr)
     sys.stdout.write(arr)
+    sys.stdout.flush()
+
 
 
 def main():
@@ -191,24 +191,16 @@ def main():
     - predict from a single data set
     '''
     if not (args.training or args.testing or args.shuffle or args.predict):
-        sys.stderr.write("[--predict], [--shuffle], [--training] or [--testing] must be set.\nExiting...\n")
+        sys.stderr.write("\nERROR:\n[--predict], [--shuffle], [--training] or [--testing] must be set.\nExiting...\n")
         sys.stderr.flush()
+        parser.print_help()
         sys.exit(1)
-    if args.predict:
+    if args.predict:  
         predict(args.predict)
         sys.exit(0)
-    if args.shuffle:
-        shuffle_data()
-    if args.training:
-        start = time.time()
-        sys.stdout.write("\n...training...\n")
-        sys.stdout.flush()
-        training()
-        end = time.time()
-        sys.stdout.write("Training time: "+ str(int(end-start)) + " seconds")
-        sys.stdout.flush()
-    if args.testing:
-        testing()
+    if args.shuffle:  shuffle_data()
+    if args.training: training()
+    if args.testing:  testing()
 
 if __name__ == "__main__":
     main()
