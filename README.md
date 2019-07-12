@@ -1,4 +1,5 @@
 # Collision
+![collisions](banner.jpg)
 
 **Collsion** Proof of concept for a neural network to detect collsions of bodies. 
 For training, validation and testing we us Blender generated images (size: 540 x 540 x 3) of cubes. 
