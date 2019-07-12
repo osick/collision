@@ -4,6 +4,9 @@ data/test/
 data/val/
 data/train/
 data/full/
+data/full/in
+data/full/out
+data/full/collision
 logs/
 models/
 
@@ -12,3 +15,4 @@ models/
 *$py.class
 *.log
 cplib/*.log
+*.png

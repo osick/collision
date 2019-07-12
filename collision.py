@@ -11,32 +11,13 @@ weights_filepath    = model_path+'/weights.h5'
 stages              = {"train":data_path+"/train",   "val":data_path+"/val",   "test":data_path+"/test"}
 img_data            = {"img_width":108, "img_height":108, "channels":3}
 
-# Parser setup
-import argparse
-parser = argparse.ArgumentParser()
-parser.add_argument("--shuffle",     help="shuffle the data before processing", action="store_true")
-parser.add_argument("--ptrain",      help="training percentage", type=float)
-parser.add_argument("--pval",        help="validation percentage", type=float)
-parser.add_argument("--ptest",       help="test percentage", type=float)
-parser.add_argument("--epochs",      help="number of epochs of training", type=int)
-parser.add_argument("--training",    help="call the training function", action="store_true")
-parser.add_argument("--testing",     help="call the testing function", action="store_true")
-parser.add_argument("--predict",     help="prints the prediction array for an image to stdout")
-parser.add_argument("--verbose",     help="more verbose output to stdout", action="store_true")
-args=parser.parse_args()
-
-# Directory setup
-import os
-if not os.path.isdir(log_path):   os.mkdir(log_path)
-if not os.path.isdir(model_path): os.mkdir(model_path)
-if not os.path.isdir(data_path):  os.mkdir(data_path)
-
 # setup the logger configuration
 import logging
 logging.basicConfig(filename=log_path+"/collision.info.log",filemode="a+",level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 logger=logging.getLogger(__name__)
 
 # some std libs 
+import os
 import time
 import numpy as np
 import sys
@@ -75,37 +56,54 @@ def define_model():
     model.compile(loss='categorical_crossentropy',optimizer="adam",metrics=['accuracy'])
     return model
 
-# def define_model-94%():    
-#     '''
-#     LeNet type CNN model
-#     '''
-#     model = Sequential()
-#     model.add(Conv2D(32, (3, 3), input_shape=(img_data["img_width"],img_data["img_height"],img_data["channels"]), activation="relu"))
-#     model.add(MaxPooling2D(pool_size=(2, 2)))
-#     model.add(Conv2D(16, (3, 3), activation="relu"))
-#     model.add(MaxPooling2D(pool_size=(2, 2), data_format="channels_first"))
-#     model.add(Flatten())
-#     model.add(Dense(units=192, activation="relu"))
-#     model.add(Dropout(0.5))
-#     model.add(Dense(units=32, activation="relu"))
-#     model.add(Dropout(0.5))
-#     model.add(Dense(3, activation='softmax'))
-#     model.compile(loss='categorical_crossentropy', optimizer="adam", metrics=['accuracy'])
-#     return model
+
+def prepare():
+    import zipfile
+    logger.info("starting prepare()...")
+
+    #unzip data
+    with zipfile.ZipFile(data_path+"full.zip","r") as zip_ref:
+        zip_ref.extractall(data_path)
+    logger.info("file "+data_path+"full.zip unzipped to "+data_path)
+    
+    #generate sub dirs for data
+    for type in ["train","val","test"]:
+        type_path=data_path+"/"+type
+        if not os.path.isdir(type_path):
+            os.mkdir(type_path)
+            logger.info("directory "+type_path+" generated")
+        for cls in ["in","out","collision"]:
+            cls_path=type_path+"/"+cls
+            if not os.path.isdir(cls_path):  
+                os.mkdir(cls_path)
+                logger.info("directory "+cls_path+" generated")
+    prep = open("./.prepared", "w")
+    prep.write("data and dir prepared")
+    prep.close()
+
+    #generate log dir and model dir
+    if not os.path.isdir(log_path):   
+        os.mkdir(log_path)
+        logger.info("directory "+log_path+" generated")
+
+    if not os.path.isdir(model_path): 
+        os.mkdir(model_path)
+        logger.info("directory "+model_path+" generated")
+    logger.info("prepare() done.")
 
 
-def shuffle_data():
+def shuffle_data(p_tr=0.75, p_va=0.15, p_te=0.1):
     '''
     separating img data in three different sub dirs: 
     - "train"
     - "val"
     - "test"
     the size of these sample sets is given by the relevant args
+    remark: No dependency on keras
     '''
-    p_tr, p_va, p_te = 0.75, 0.15, 0.1
-    if args.ptrain:  p_te=args.ptrain 
-    if args.pval:    p_te=args.pval
-    if args.ptest:   p_te=args.ptest 
+
+    if not os.path.isfile("./.prepared"):
+        prepare()
     perc_vals = {"train":p_tr, "val":p_va, "test":p_te}
     for category in categories:
         source_path="."+os.sep+"data"+os.sep+"full"+os.sep+category+os.sep
@@ -124,12 +122,10 @@ def shuffle_data():
             count = upper
 
 
-def training():
+def training(epochs=10):
     '''
     train the model
     '''
-    epochs = 12
-    if args.epochs: epochs=args.epochs
     train_datagen   = ImageDataGenerator( rescale = 1./255)
     train_generator = train_datagen.flow_from_directory(stages["train"], target_size=(img_data["img_width"], img_data["img_height"]), batch_size=32, class_mode='categorical')
     val_datagen     = ImageDataGenerator( rescale = 1./127)
@@ -140,7 +136,8 @@ def training():
     model.save(model_filepath)
     model.save_weights(weights_filepath)
 
-def testing():
+
+def testing(verbose=False):
     '''
     test the model
     '''
@@ -160,7 +157,7 @@ def testing():
             if result!=category:
                 _f=_f+1
                 logger.debug("false detection:" + cat_path + filename + ":" + result)
-                if args.verbose:
+                if verbose:
                     sys.stdout.write("false detection:" + cat_path + filename + ":" + result+"\n")
                     sys.stdout.flush()
     sys.stdout.write("Detail result\n" + json.dumps(_total,indent=2) + "\n")
@@ -180,8 +177,6 @@ def predict(filepath):
     sys.stdout.write(arr)
     sys.stdout.flush()
 
-
-
 def main():
     '''
     main routine with for different use cases
@@ -190,6 +185,20 @@ def main():
     - test from data
     - predict from a single data set
     '''
+    # Parser setup
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--shuffle",     help="shuffle the data before processing", action="store_true")
+    parser.add_argument("--ptrain",      help="training percentage", type=float)
+    parser.add_argument("--pval",        help="validation percentage", type=float)
+    parser.add_argument("--ptest",       help="test percentage", type=float)
+    parser.add_argument("--epochs",      help="number of epochs of training", type=int)
+    parser.add_argument("--training",    help="call the training function", action="store_true")
+    parser.add_argument("--testing",     help="call the testing function", action="store_true")
+    parser.add_argument("--predict",     help="prints the prediction array for an image to stdout")
+    parser.add_argument("--verbose",     help="more verbose output to stdout", action="store_true")
+    args=parser.parse_args()
+
     if not (args.training or args.testing or args.shuffle or args.predict):
         sys.stderr.write("\nERROR:\n[--predict], [--shuffle], [--training] or [--testing] must be set.\nExiting...\n")
         sys.stderr.flush()
@@ -198,9 +207,20 @@ def main():
     if args.predict:  
         predict(args.predict)
         sys.exit(0)
-    if args.shuffle:  shuffle_data()
-    if args.training: training()
-    if args.testing:  testing()
+    if args.shuffle:  
+        p_tr=0.75
+        p_va=0.15
+        p_te=0.1
+        if args.ptrain:  p_tr=args.ptrain 
+        if args.pval:    p_va=args.pval
+        if args.ptest:   p_te=args.ptest 
+        shuffle_data(p_tr, p_va, p_te)
+    if args.training: 
+            if args.epochs: training(args.epochs)
+            else: training()
+    if args.testing:  
+            if args.verbose: testing(args.verbose)
+            else: testing()
 
 if __name__ == "__main__":
     main()
