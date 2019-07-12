@@ -4,6 +4,8 @@
 For training, validation and testing we us Blender generated images (size: 540 x 540 x 3) of cubes. 
 It uses as LeNet like architecture and the whole can be used as a template for other CNN projects.
 
+![collisions](./banner.jpg)
+
 ## Usage
 ```shell
 usage: collision.py [-h] [--shuffle] [--ptrain PTRAIN] [--pval PVAL]
