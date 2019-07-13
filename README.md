@@ -1,8 +1,9 @@
 # Collision
-
-**Collsion** Proof of concept for a neural network to detect collsions of bodies. 
 ![collisions](banner.jpg)
-For training, validation and testing we us Blender generated images (size: 540 x 540 x 3) of cubes. 
+
+**Collsion** is a proof of concept for a neural network to detect collsions of bodies. 
+
+This project is for training, validation and testing we us Blender generated images (size: 540 x 540 x 3) of cubes. 
 It uses as LeNet like architecture and the whole can be used as a template for other CNN projects.
 
 
