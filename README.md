@@ -12,34 +12,17 @@ Hint: This project uses Keras as AI framework.
 ## Usage
 There are 5 steps to use it correctly
 
-1. after downloading the whole repository, unpack the file full.zip in the data directory
+1. After downloading the whole repository, unpack the file full.zip in the data directory
 
-2. After that shuffle the data by
-  '''
-  $ collision.py --shuffle
-  '''
+2. Shuffle the data by `$ collision.py --shuffle`
 
-3. The model has to be trained
-  '''
-  $ collision.py --training
-  '''
+3. The model has to be trained `$ collision.py --training`
 
-4. the model has to be tested
-  '''
-  $ collision.py --testing
-  '''
-  determines the quality of the trained model. Output is a dictionary with the summary of correct and false detections per category (in, out, collision). The only prerequisite for this option is that the model has been trained before (e.g by using the --training option) 
-  the commands can also be combined, e.g 
-  '''
-  $ collision.py --shuffle --trainig --testing --predict
-  '''
+4. The model has to be tested `$ collision.py --testing`
+   testing determines the quality of the trained model. Output is a dictionary with the summary of correct and false detections per category (in, out, collision). The only prerequisite for this option is that the model has been trained before (e.g by using the --training option). 
+   The commands can also be combined, e.g `$ collision.py --shuffle --trainig --testing --predict`
 
-
-
-5. The model can be used to make prediction (remember the image shoudl have resolutio  540 x 540 x 3)
-  '''
-  $ collision.py --predict "/path/to/the/image"
-  '''
+5. The model can now be used to make prediction (remember the image shoudl have resolutio  540 x 540     x 3) `$ collision.py --predict '/path/to/the/image' `
 
 The whole commands are given by the following:
 
