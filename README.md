@@ -29,8 +29,7 @@ There are 5 steps to use it correctly
   $ collision.py --testing
   '''
   determines the quality of the trained model. Output is a dictionary with the summary of correct and false detections per category (in, out, collision). The only prerequisite for this option is that the model has been trained before (e.g by using the --training option) 
-
-the commands can also be combined, e.g 
+  the commands can also be combined, e.g 
   '''
   $ collision.py --shuffle --trainig --testing --predict
   '''
