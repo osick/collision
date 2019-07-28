@@ -1,13 +1,13 @@
 # Collision
 ![collisions](banner.jpg)
 
-**Collsion** is a proof of concept for a neural network to detect collsions of bodies. 
+**Collsion** is a simple proof of concept of a neural network detecting collsions of bodies. In this setup it can reach an accuracy of about 98% which sounds good, but in fact is not good enough remembering self drinving cars ...  
 
-For training, validation and testing this project uses abstract Blender generated images (size: 540 x 540 x 3) of cubes. 
-It uses as LeNet5 like architecture (see [convolutional network on wikipedia](https://en.wikipedia.org/wiki/Convolutional_neural_network) for more). 
+For training, validation and testing it uses abstract Blender generated images (size: 540 x 540 x 3) of cubes. 
+
+Futher it uses an LeNet-5 like architecture (for more see [convolutional neural networks](https://en.wikipedia.org/wiki/Convolutional_neural_network) on Wikipedia). 
+
 The whole can be used as a template for other CNN projects. Feel free.
-
-Hint: This project uses Keras as AI framework. 
 
 ## Usage
 There are 5 steps to use it correctly
@@ -22,7 +22,8 @@ There are 5 steps to use it correctly
    testing determines the quality of the trained model. Output is a dictionary with the summary of correct and false detections per category (in, out, collision). The only prerequisite for this option is that the model has been trained before (e.g by using the --training option). 
    The commands can also be combined, e.g `$ collision.py --shuffle --trainig --testing --predict`
 
-5. The model can now be used to make prediction (remember the image shoudl have resolutio  540 x 540     x 3) `$ collision.py --predict '/path/to/the/image' `
+5. The model can now be used to make prediction (remember the image should have resolution  540 x 540 x 3) 
+  `$ collision.py --predict '/path/to/the/image' `
 
 The whole commands are given by the following:
 
@@ -46,5 +47,5 @@ optional arguments:
 
 ## Credits
 Credits go to
-* Blender.org offering this georguous program
-* My son Leif who generated the images 
+* blender.org offering this georguous program
+* My son who generated the images 
