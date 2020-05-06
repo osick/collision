@@ -1,24 +1,27 @@
 #!/usr/bin/env python3
 #-*-coding:utf-8-*-
 
+import os
+
 #const
 categories          = ["collision", "in", "out"]
-log_path            = "./logs"
-model_path          = "./models"
-data_path           = "./data"
-model_filepath      = model_path+'/model.h5'
-weights_filepath    = model_path+'/weights.h5'
-stages              = {"train":data_path+"/train",   "val":data_path+"/val",   "test":data_path+"/test"}
+log_path            = ""
+model_path          = "models"
+data_path           = "data"
+model_filepath      = os.path.join(model_path,'model.h5')
+weights_filepath    = os.path.join(model_path,'weights.h5')
+stages              = {
+    "train":os.path.join(data_path,"train"),   
+    "val":os.path.join(data_path,"val"),   
+    "test":os.path.join(data_path,"test")}
 img_data            = {"img_width":108, "img_height":108, "channels":3}
 
 # setup the logger configuration
 import logging
-logging.basicConfig(filename=log_path+"/collision.info.log",filemode="a+",level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+logging.basicConfig(filename=os.path.join(log_path,"collision.info.log"),filemode="a+",level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 logger=logging.getLogger(__name__)
 
 # some std libs 
-import os
-import time
 import numpy as np
 import sys
 import shutil
@@ -37,6 +40,7 @@ from keras import callbacks
 
 # make tf not so noisy
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
 
 def define_model():    
     '''
@@ -60,32 +64,27 @@ def define_model():
 def prepare():
     import zipfile
     logger.info("starting prepare()...")
-
     #unzip data
-    with zipfile.ZipFile(data_path+"full.zip","r") as zip_ref:
+    with zipfile.ZipFile(os.path.join(data_path,"full.zip"),"r") as zip_ref:
         zip_ref.extractall(data_path)
     logger.info("file "+data_path+"full.zip unzipped to "+data_path)
-    
     #generate sub dirs for data
     for type in ["train","val","test"]:
-        type_path=data_path+"/"+type
+        type_path=os.path.join(data_path,type)
         if not os.path.isdir(type_path):
             os.mkdir(type_path)
             logger.info("directory "+type_path+" generated")
         for cls in ["in","out","collision"]:
-            cls_path=type_path+"/"+cls
+            cls_path=os.path.join(type_path,cls)
             if not os.path.isdir(cls_path):  
                 os.mkdir(cls_path)
                 logger.info("directory "+cls_path+" generated")
-    prep = open("./.prepared", "w")
-    prep.write("data and dir prepared")
-    prep.close()
-
+    with open(".prepared", "w") as prep: 
+        prep.write("data and dir prepared")    
     #generate log dir and model dir
     if not os.path.isdir(log_path):   
         os.mkdir(log_path)
         logger.info("directory "+log_path+" generated")
-
     if not os.path.isdir(model_path): 
         os.mkdir(model_path)
         logger.info("directory "+model_path+" generated")
@@ -93,16 +92,9 @@ def prepare():
 
 
 def shuffle_data(p_tr=0.75, p_va=0.15, p_te=0.1):
-    '''
-    separating img data in three different sub dirs: 
-    - "train"
-    - "val"
-    - "test"
-    the size of these sample sets is given by the relevant args
-    remark: No dependency on keras
-    '''
+    ''' separating img data in three different sub dirs: "train", "val", "test", the size of these sample sets is given by the relevant args '''
 
-    if not os.path.isfile("./.prepared"):
+    if not os.path.isfile(".prepared"):
         prepare()
     perc_vals = {"train":p_tr, "val":p_va, "test":p_te}
     for category in categories:
@@ -123,9 +115,8 @@ def shuffle_data(p_tr=0.75, p_va=0.15, p_te=0.1):
 
 
 def training(epochs=10):
-    '''
-    train the model
-    '''
+    ''' train the model'''
+
     train_datagen   = ImageDataGenerator( rescale = 1./255)
     train_generator = train_datagen.flow_from_directory(stages["train"], target_size=(img_data["img_width"], img_data["img_height"]), batch_size=32, class_mode='categorical')
     val_datagen     = ImageDataGenerator( rescale = 1./127)
@@ -138,16 +129,15 @@ def training(epochs=10):
 
 
 def testing(verbose=False):
-    '''
-    test the model
-    '''
+    ''' test the model '''
+    
     _f=0
     _t=0
     _total={ "in":{"in":0,"collision":0,"out":0},  "collision":{"in":0,"collision":0,"out":0},  "out":{"in":0,"collision":0,"out":0} }
     model = load_model(model_filepath)
     model.load_weights(weights_filepath)
     for category in categories:
-        cat_path=stages["test"]+"/"+category+"/"    
+        cat_path=os.path.join(stages["test"],category)    
         _t+=len(os.listdir(cat_path))
         for filename in os.listdir(cat_path):
             x = load_img(cat_path+filename, target_size=(img_data["img_width"], img_data["img_height"]))
@@ -166,25 +156,34 @@ def testing(verbose=False):
 
 
 def predict(filepath):
-    '''
-    returns prediction values array for a single image
-    '''
+    '''returns prediction values array for a single image'''
+    # bad style, but libs are only needed here, so we load it only in this routine
+    import matplotlib.pyplot as plt
+    import matplotlib.image as mpimg
+    # init
     model = load_model(model_filepath)
     model.load_weights(weights_filepath)
     x = load_img(filepath, target_size=(img_data["img_width"], img_data["img_height"]))
-    arr=model.predict(np.expand_dims(img_to_array(x), axis=0))
+    # main step: Prediction from model
+    arr=model.predict(np.expand_dims(img_to_array(x), axis=0))[0]
     logger.info(arr)
-    sys.stdout.write(arr)
+    predicted_category=categories[np.argmax(arr)]
+    # result to stdout
+    result="The image " + filepath + "is of type '"+predicted_category+"'"
+    sys.stdout.write("\n"+result+"\n"+"-"*len(result)+"\n")
+    for i, prediction in enumerate(arr):
+        sys.stdout.write("P('{}') = {:.4f}\n".format(categories[i],prediction))
     sys.stdout.flush()
+    # show image
+    img=mpimg.imread(filepath)
+    _ = plt.imshow(img)
+    plt.title("predicted type: '" + predicted_category + "'")
+    plt.show()
+
 
 def main():
-    '''
-    main routine with for different use cases
-    - shuffle data
-    - train from data
-    - test from data
-    - predict from a single data set
-    '''
+    ''' main routine with for different use cases: shuffle data, train from data, test from data, predict from a single data set '''
+
     # Parser setup
     import argparse
     parser = argparse.ArgumentParser()
@@ -198,7 +197,7 @@ def main():
     parser.add_argument("--predict",     help="prints the prediction array for an image to stdout")
     parser.add_argument("--verbose",     help="more verbose output to stdout", action="store_true")
     args=parser.parse_args()
-
+    # determines which routine shold be done 
     if not (args.training or args.testing or args.shuffle or args.predict):
         sys.stderr.write("\nERROR:\n[--predict], [--shuffle], [--training] or [--testing] must be set.\nExiting...\n")
         sys.stderr.flush()

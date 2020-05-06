@@ -9,10 +9,12 @@ data/full/out
 data/full/collision
 logs/
 models/
+train/
+validation/
 
 # files
 *.py[cod]
 *$py.class
 *.log
-cplib/*.log
 *.png
+.prepared
