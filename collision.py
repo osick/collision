@@ -4,20 +4,14 @@
 import os
 
 #const
-categories          = ["collision", "in", "out"]
-log_path            = ""
-model_path          = "models"
-data_path           = "data"
-model_filepath      = os.path.join(model_path,'model.h5')
-weights_filepath    = os.path.join(model_path,'weights.h5')
-stages              = {
-    "train":os.path.join(data_path,"train"),   
-    "val":os.path.join(data_path,"val"),   
-    "test":os.path.join(data_path,"test")}
-img_data            = {"img_width":108, "img_height":108, "channels":3}
+log_path  = "data"
+
+
+
 
 # setup the logger configuration
 import logging
+if not os.path.isdir(log_path): os.mkdir(log_path)
 logging.basicConfig(filename=os.path.join(log_path,"collision.info.log"),filemode="a+",level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 logger=logging.getLogger(__name__)
 
@@ -26,6 +20,9 @@ import numpy as np
 import sys
 import shutil
 import json
+import zipfile
+import re
+
 
 # some AI libs
 from sklearn.model_selection import train_test_split
@@ -35,191 +32,166 @@ from keras.preprocessing.image import ImageDataGenerator, load_img, img_to_array
 from keras import optimizers
 from keras.models import Sequential, load_model
 from keras.layers import Dropout, Flatten, Dense, Activation
-from keras.layers.convolutional import Conv2D, MaxPooling2D
+from keras.layers.convolutional import Conv2D, MaxPooling2D, AveragePooling2D
 from keras import callbacks
 
 # make tf not so noisy
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-
-def define_model():    
-    '''
-    LeNet type CNN model
-    '''
-    model=Sequential()
-    model.add(Conv2D(48,(3,3),input_shape=(img_data["img_width"],img_data["img_height"],img_data["channels"]),activation="relu"))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Conv2D(16,(3,3),activation="relu"))
-    model.add(MaxPooling2D(pool_size=(2, 2),data_format="channels_first"))
-    model.add(Flatten())
-    model.add(Dense(units=256,activation="relu"))
-    model.add(Dropout(0.25))
-    model.add(Dense(units=32,activation="relu"))
-    model.add(Dropout(0.25))
-    model.add(Dense(3,activation='softmax'))
-    model.compile(loss='categorical_crossentropy',optimizer="adam",metrics=['accuracy'])
-    return model
-
-
-def prepare():
-    import zipfile
-    logger.info("starting prepare()...")
-    #unzip data
-    with zipfile.ZipFile(os.path.join(data_path,"full.zip"),"r") as zip_ref:
-        zip_ref.extractall(data_path)
-    logger.info("file "+data_path+"full.zip unzipped to "+data_path)
-    #generate sub dirs for data
-    for type in ["train","val","test"]:
-        type_path=os.path.join(data_path,type)
-        if not os.path.isdir(type_path):
-            os.mkdir(type_path)
-            logger.info("directory "+type_path+" generated")
-        for cls in ["in","out","collision"]:
-            cls_path=os.path.join(type_path,cls)
-            if not os.path.isdir(cls_path):  
-                os.mkdir(cls_path)
-                logger.info("directory "+cls_path+" generated")
-    with open(".prepared", "w") as prep: 
-        prep.write("data and dir prepared")    
-    #generate log dir and model dir
-    if not os.path.isdir(log_path):   
-        os.mkdir(log_path)
-        logger.info("directory "+log_path+" generated")
-    if not os.path.isdir(model_path): 
-        os.mkdir(model_path)
-        logger.info("directory "+model_path+" generated")
-    logger.info("prepare() done.")
-
-
-def shuffle_data(p_tr=0.75, p_va=0.15, p_te=0.1):
-    ''' separating img data in three different sub dirs: "train", "val", "test", the size of these sample sets is given by the relevant args '''
-
-    if not os.path.isfile(".prepared"):
-        prepare()
-    perc_vals = {"train":p_tr, "val":p_va, "test":p_te}
-    for category in categories:
-        source_path="."+os.sep+"data"+os.sep+"full"+os.sep+category+os.sep
-        files = [f for f in os.listdir(source_path)]
-        np.random.shuffle(files)
-        logger.info(category+ " files:" + str(len(files)))
-        count=0
-        for type, perc in perc_vals.items():
-            target_path = "."+os.sep+"data"+os.sep+type+os.sep+category+os.sep
-            shutil.rmtree(target_path)
-            os.mkdir(target_path)
-            upper = count+int(len(files)*perc)
-            logger.info(str(int(len(files)*perc)) + " files to "+ target_path)
-            for file in files[count:upper]:
-                shutil.copy(source_path+file, target_path+file)
-            count = upper
-
-
-def training(epochs=10):
-    ''' train the model'''
-
-    train_datagen   = ImageDataGenerator( rescale = 1./255)
-    train_generator = train_datagen.flow_from_directory(stages["train"], target_size=(img_data["img_width"], img_data["img_height"]), batch_size=32, class_mode='categorical')
-    val_datagen     = ImageDataGenerator( rescale = 1./127)
-    val_generator   = val_datagen.flow_from_directory(stages["val"], target_size=(img_data["img_width"], img_data["img_height"]), batch_size=32, class_mode='categorical')
-    model = define_model()
-    tensorboard_callback = callbacks.TensorBoard(log_dir=log_path)
-    model.fit_generator(train_generator, samples_per_epoch=2000, epochs=epochs, validation_data=val_generator, validation_steps=32,callbacks=[tensorboard_callback])
-    model.save(model_filepath)
-    model.save_weights(weights_filepath)
-
-
-def testing(verbose=False):
-    ''' test the model '''
+class collisionData():
     
-    _f=0
-    _t=0
-    _total={ "in":{"in":0,"collision":0,"out":0},  "collision":{"in":0,"collision":0,"out":0},  "out":{"in":0,"collision":0,"out":0} }
-    model = load_model(model_filepath)
-    model.load_weights(weights_filepath)
-    for category in categories:
-        cat_path=os.path.join(stages["test"],category)    
-        _t+=len(os.listdir(cat_path))
-        for filename in os.listdir(cat_path):
-            x = load_img(cat_path+filename, target_size=(img_data["img_width"], img_data["img_height"]))
-            array = model.predict(np.expand_dims(img_to_array(x), axis=0))
-            result=categories[np.argmax(array[0])]
-            _total[category][result]+=1
-            if result!=category:
-                _f=_f+1
-                logger.debug("false detection:" + cat_path + filename + ":" + result)
-                if verbose:
-                    sys.stdout.write("false detection:" + cat_path + filename + ":" + result+"\n")
-                    sys.stdout.flush()
-    sys.stdout.write("Detail result\n" + json.dumps(_total,indent=2) + "\n")
-    sys.stdout.write("Total detection rate: {:05.1f}%\n\n".format((_t-_f)/_t*100))
-    sys.stdout.flush()
+    def __init__(self, dataPath):
+        self.categories         = ["collision", "in", "out"]
+        self.data_path          = dataPath 
+        self.img_data           = {"img_width":108, "img_height":108, "channels":3}
+        self.dataConfiguration  = {"percentage":{}}
+
+    def prepare(self, percentages, filename="full.zip"):
+        logger.info("starting prepare()...")
+        #unzip data
+        with zipfile.ZipFile(os.path.join(self.data_path,filename),"r") as zip_ref:
+            zip_ref.extractall(self.data_path)
+        logger.info("file "+self.data_path+" "+filename +" unzipped to "+self.data_path)
+        #generate sub dirs for data
+        for type in percentages.keys():
+            type_path=os.path.join(self.data_path,type)
+            print("prepare: type",type_path)
+            if not os.path.isdir(type_path):
+                os.mkdir(type_path)
+                logger.info("directory "+type_path+" generated")
+            for cls in self.categories:
+                cls_path=os.path.join(type_path,cls)
+                if not os.path.isdir(cls_path):  
+                    os.mkdir(cls_path)
+                    logger.info("directory "+cls_path+" generated")
+        with open(".prepared", "w") as prep: 
+            prep.write("data and dir prepared")    
 
 
-def predict(filepath):
-    '''returns prediction values array for a single image'''
-    # bad style, but libs are only needed here, so we load it only in this routine
-    import matplotlib.pyplot as plt
-    import matplotlib.image as mpimg
-    # init
-    model = load_model(model_filepath)
-    model.load_weights(weights_filepath)
-    x = load_img(filepath, target_size=(img_data["img_width"], img_data["img_height"]))
-    # main step: Prediction from model
-    arr=model.predict(np.expand_dims(img_to_array(x), axis=0))[0]
-    logger.info(arr)
-    predicted_category=categories[np.argmax(arr)]
-    # result to stdout
-    result="The image " + filepath + "is of type '"+predicted_category+"'"
-    sys.stdout.write("\n"+result+"\n"+"-"*len(result)+"\n")
-    for i, prediction in enumerate(arr):
-        sys.stdout.write("P('{}') = {:.4f}\n".format(categories[i],prediction))
-    sys.stdout.flush()
-    # show image
-    img=mpimg.imread(filepath)
-    _ = plt.imshow(img)
-    plt.title("predicted type: '" + predicted_category + "'")
-    plt.show()
+    def shuffle(self, percentages):
+        ''' separating img data in three different sub dirs: "train", "val", "test", the size of these sample sets is given by the relevant args '''
+
+        #if not os.path.isfile(".prepared"): self.prepare(percentages) # prepare Data only on first usage
+        for category in self.categories:
+            source_path=os.path.join(self.data_path,"full",category)
+            files = [f for f in os.listdir(source_path)]
+            np.random.shuffle(files)
+            logger.info(category+ " files:" + str(len(files)))
+            count=0
+            for type, perc in percentages.items():
+                target_path =os.path.join(self.data_path,type,category)
+                shutil.rmtree(target_path)
+                os.mkdir(target_path)
+                upper = count+int(len(files)*perc)
+                logger.info(str(int(len(files)*perc)) + " files to "+ target_path)
+                for file in files[count:upper]: 
+                    shutil.copy(os.path.join(source_path,file), os.path.join(target_path,file))
+                count = upper
 
 
-def main():
-    ''' main routine with for different use cases: shuffle data, train from data, test from data, predict from a single data set '''
+class collisionModel():
 
-    # Parser setup
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--shuffle",     help="shuffle the data before processing", action="store_true")
-    parser.add_argument("--ptrain",      help="training percentage", type=float)
-    parser.add_argument("--pval",        help="validation percentage", type=float)
-    parser.add_argument("--ptest",       help="test percentage", type=float)
-    parser.add_argument("--epochs",      help="number of epochs of training", type=int)
-    parser.add_argument("--training",    help="call the training function", action="store_true")
-    parser.add_argument("--testing",     help="call the testing function", action="store_true")
-    parser.add_argument("--predict",     help="prints the prediction array for an image to stdout")
-    parser.add_argument("--verbose",     help="more verbose output to stdout", action="store_true")
-    args=parser.parse_args()
-    # determines which routine shold be done 
-    if not (args.training or args.testing or args.shuffle or args.predict):
-        sys.stderr.write("\nERROR:\n[--predict], [--shuffle], [--training] or [--testing] must be set.\nExiting...\n")
-        sys.stderr.flush()
-        parser.print_help()
-        sys.exit(1)
-    if args.predict:  
-        predict(args.predict)
-        sys.exit(0)
-    if args.shuffle:  
-        p_tr=0.75
-        p_va=0.15
-        p_te=0.1
-        if args.ptrain:  p_tr=args.ptrain 
-        if args.pval:    p_va=args.pval
-        if args.ptest:   p_te=args.ptest 
-        shuffle_data(p_tr, p_va, p_te)
-    if args.training: 
-            if args.epochs: training(args.epochs)
-            else: training()
-    if args.testing:  
-            if args.verbose: testing(args.verbose)
-            else: testing()
+    def __init__(self,cd, modelConf):
+        self.cData = cd
+        self.dataConfiguration={"percentage":{"train":0.75,"val":0.15,"test":0.1}}
+        self.stages = {stage:os.path.join(self.cData.data_path,stage) for stage in ["train","val","test"]}
+        self.modelConfiguration = modelConf
+        self.model_path = "models"
+        if not os.path.isdir(self.model_path): os.mkdir(self.model_path)
+        self.model_filepath = os.path.join(self.model_path,"model"+self.modelConfiguration['name']+".h5")
+        self.weights_filepath = os.path.join(self.model_path,"weights"+self.modelConfiguration['name']+".h5")
+        
+    def initModel(self):    
+        ''' LeNet-5 type CNN model'''
+        # init sequential model
+        self.model=Sequential()
+        #loop the modelconfiguration["steps"]
+        for i,step in enumerate(self.modelConfiguration["steps"]):
+            print("step",i,step)
+            if step["type"]=="Conv2D":
+                if i==0: self.model.add(Conv2D( step["filters"], step["kernel-size"] ,input_shape=(self.cData.img_data["img_width"],self.cData.img_data["img_height"],self.cData.img_data["channels"]),activation=step["activation"]))
+                else: self.model.add(Conv2D( step["filters"], step["kernel-size"] ,activation=step["activation"]))
+            elif step["type"]=="MaxPooling2D":
+                if "data_format" in step: self.model.add(MaxPooling2D(pool_size=step["pool-size"],data_format=step["data_format"]))
+                else: self.model.add(MaxPooling2D(pool_size=step["pool-size"]))
+            elif step["type"]=="Flatten":           self.model.add(Flatten())
+            elif step["type"]=="AveragePooling2D":  self.model.add(AveragePooling2D())
+            elif step["type"]=="Dense":             self.model.add(Dense(step["units"],activation=step["activation"]))
+            elif step["type"]=="Dropout":           self.model.add(Dropout(step["rate"]))
+            else: print("model step", step ,"unknown")
+        # compile the model        
+        self.model.compile(loss='categorical_crossentropy',optimizer="adam",metrics=['accuracy'])
 
-if __name__ == "__main__":
-    main()
+    def training(self,epochs=10, cleanupBefore=True):
+        ''' train the model'''
+
+        # cleanup old data
+        for stage in self.stages:
+            pluginDir=os.path.join(self.stages[stage],"plugins") 
+            if os.path.isdir(pluginDir): shutil.rmtree(pluginDir)
+            for f in os.listdir(self.stages[stage]): 
+                if re.search("^events", f): 
+                    os.remove(os.path.join(self.stages[stage], f))
+        if os.path.isdir(os.path.join(self.cData.data_path,"validation")): 
+            shutil.rmtree(os.path.join(self.cData.data_path,"validation"))
+            
+        
+        train_datagen   = ImageDataGenerator( rescale = 1./255)
+        train_generator = train_datagen.flow_from_directory(self.stages["train"], target_size=(self.cData.img_data["img_width"], self.cData.img_data["img_height"]), batch_size=32, class_mode='categorical')
+        val_datagen     = ImageDataGenerator( rescale = 1./127)
+        val_generator   = val_datagen.flow_from_directory(self.stages["val"], target_size=(self.cData.img_data["img_width"], self.cData.img_data["img_height"]), batch_size=32, class_mode='categorical')
+        self.initModel()
+        tensorboard_callback = callbacks.TensorBoard(log_dir=log_path)
+        self.model.fit_generator(train_generator, samples_per_epoch=2000, epochs=epochs, validation_data=val_generator, validation_steps=32,callbacks=[tensorboard_callback])
+        self.model.save(self.model_filepath)
+        self.model.save_weights(self.weights_filepath)
+
+    def test(self):
+        ''' test the model '''
+        
+        _falseCount=0
+        _totalCount=1
+        _total={key:{key1:0 for key1 in self.cData.categories} for key in self.cData.categories}
+        model = load_model(self.model_filepath)
+        model.load_weights(self.weights_filepath)
+        for category in self.cData.categories:
+            cat_path=os.path.join(self.stages["test"],category)
+            print(cat_path)    
+            _totalCount+=len(os.listdir(cat_path))
+            for filename in os.listdir(cat_path):
+                x = load_img(os.path.join(cat_path,filename), target_size=(self.cData.img_data["img_width"], self.cData.img_data["img_height"]))
+                array = model.predict(np.expand_dims(img_to_array(x), axis=0))
+                result=self.cData.categories[np.argmax(array[0])]
+                _total[category][result]+=1
+                if not result==category: 
+                    _falseCount=_falseCount+1 
+                    logger.debug("false detection:" + cat_path + filename + ":" + result)
+        sys.stdout.write("Detail result\n" + json.dumps(_total,indent=2) + "\n")
+        sys.stdout.write("Total detection rate: {:05.1f}%\n\n".format((_totalCount - _falseCount)/_totalCount*100))
+        sys.stdout.flush()
+
+    def predict(self, filepath):
+        '''returns prediction values array for a single image'''
+
+        # bad style, but libs are only needed here, so we load it only in this routine
+        import matplotlib.pyplot as plt
+        import matplotlib.image as mpimg
+        # init
+        model = load_model(self.model_filepath)
+        model.load_weights(self.weights_filepath)
+        x = load_img(filepath, target_size=(self.cData.img_data["img_width"], self.cData.img_data["img_height"]))
+        # main step: Prediction from model
+        arr=model.predict(np.expand_dims(img_to_array(x), axis=0))[0]
+        logger.info(arr)
+        predicted_category=self.cData.categories[np.argmax(arr)]
+        # result to stdout
+        result="image " + filepath + " is of type '"+predicted_category+"'"
+        logger.info(result)
+        sys.stdout.write("\n"+result+"\n"+"-"*len(result)+"\n")
+        for i, prediction in enumerate(arr): sys.stdout.write("P('{}') = {:.4f}\n".format(self.cData.categories[i],prediction))
+        sys.stdout.flush()
+        # show image
+        img=mpimg.imread(filepath)
+        _ = plt.imshow(img)
+        plt.title("predicted type: '" + predicted_category + "'")
+        plt.show()
