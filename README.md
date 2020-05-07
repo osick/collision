@@ -5,50 +5,46 @@
 
 For training, validation and testing it uses abstract Blender generated images (size: 540 x 540 x 3) of cubes. 
 
-Futher it uses an LeNet-5 like architecture (for more see [convolutional neural networks](https://en.wikipedia.org/wiki/Convolutional_neural_network) on Wikipedia). 
+Futher it can use an LeNet-5 like architecture (for more see [convolutional neural networks](https://en.wikipedia.org/wiki/Convolutional_neural_network) on Wikipedia). 
 
 The whole can be used as a template for other CNN projects. Feel free.
 
 ## Usage
-There are 5 steps to use it correctly
 
-1. After downloading the whole repository, unpack the file full.zip in the data directory
-
-2. Shuffle the data by `$ mainCollision.py --shuffle`
-
-3. The model has to be trained `$ mainCollision.py --training`
-
-4. The model has to be tested `$ mainCollision.py --testing`
-   testing determines the quality of the trained model. Output is a dictionary with the summary of correct and false detections per category (in, out, collision). The only prerequisite for this option is that the model has been trained before (e.g by using the --training option). 
-   The commands can also be combined, e.g `$ mainCollision.py --shuffle --trainig --testing --predict`
-
-5. The model can now be used to make prediction (remember the image should have resolution  540 x 540 x 3) 
-  `$ mainCollision.py --predict '/path/to/the/image' `
-
-The whole commands are given by the following:
+The whole of main.py is given by the following:
 
 ```shell
-usage: collision.py [-h] [--shuffle] [--ptrain PTRAIN] [--pval PVAL]
-                    [--ptest PTEST] [--epochs EPOCHS] [--training] [--testing]
-                    [--predict PREDICT] [--verbose]
+usage: main.py [-h] [--shuffle] [--epochs EPOCHS] [--model MODEL] [--training]
+               [--testing] [--predict PREDICT]
 
 optional arguments:
   -h, --help         show this help message and exit
   --shuffle          shuffle the data before processing
-  --ptrain PTRAIN    training percentage
-  --pval PVAL        validation percentage
-  --ptest PTEST      test percentage
-  --epochs EPOCHS    number of epochs of training
+  --epochs EPOCHS    number of epochs of training (default:10)
+  --model MODEL      choose a model (default: Conf95)
   --training         call the training function
   --testing          call the testing function
-  --predict PREDICT  prints the prediction array for an image to stdout
-  --verbose          more verbose output to stdout
+  --predict PREDICT  compute the prediction of an image
 ```
+There are 5 steps to use it:
+
+0. After downloading the whole repository, unpack the file full.zip in the data directory
+
+1. Shuffle the data by `$ main.py --shuffle`
+
+2. The model has to be trained `$ main.py --training`. You can define an own model using the --model attribut. Default ist Conf95. See [Conf95.model])Conf95.model). This model definition file is a very simple parametrizsation file for a convolutional neural network (CNN).
+
+3. The model has to be tested `$ main.py --testing`
+   testing determines the quality of the trained model. Output is a dictionary with the summary of correct and false detections per category (in, out, collision). The only prerequisite for this option is that the model has been trained before (e.g by using the --training option). 
+   The commands can also be combined, e.g `$ main.py --shuffle --trainig --testing --predict`
+
+4. The model can now be used to make prediction (remember the image should have resolution  540 x 540 x 3) 
+  `$ main.py --predict '/path/to/the/image' `
+
 
 ## Licence
 [GNU General Public License v3.0](COPYING)
 
 ## Credits
-Credits go to
-* blender.org offering this georguous program
-* My son who generated the images 
+* [Blender](http://blender.org) offering this georguous program
+* Credits go also to my son, who generated the images 
