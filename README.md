@@ -9,9 +9,20 @@ Futher it can use an LeNet-5 like architecture (for more see [convolutional neur
 
 The whole can be used as a template for other CNN projects. Feel free.
 
+The repo comes with a [large data file](data/full.zip) with thousand of generated images of two cubes in three different categories:
+1. collision: The two cubes toch each other but don't contain themself
+2. in: One cube contains the other
+3. out: The cubes are separated
+
+See the three different parts of the image above...
+
 ## Usage
 
-The whole of main.py is given by the following:
+Thsi repo cames with two Python files:
+* collision.py: contains two class, one for handlich the data, one for the CNN
+* main.py:      This contains a reference implementation of the collision classes
+
+Usage main.py is given by the following:
 
 ```shell
 usage: main.py [-h] [--shuffle] [--epochs EPOCHS] [--model MODEL] [--training]
