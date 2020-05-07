@@ -1,0 +1,15 @@
+{
+    "name":"Conf95",
+    "steps":[
+        {"type":"Conv2D",           "filters":48, "kernel-size":[3,3], "activation":"relu"}, 
+        {"type":"MaxPooling2D",     "pool-size":[2,2]}, 
+        {"type":"Conv2D",           "filters":16, "kernel-size":[3,3], "activation":"relu"}, 
+        {"type":"MaxPooling2D",     "pool-size":[2,2], "data_format":"channels_first"}, 
+        {"type":"Flatten"}, 
+        {"type":"Dense",            "units":256, "activation":"relu"}, 
+        {"type":"Dropout",          "rate":0.25}, 
+        {"type":"Dense",            "units":32, "activation":"relu"}, 
+        {"type":"Dropout",          "rate":0.25}, 
+        {"type":"Dense",            "units":3, "activation":"softmax"}
+    ]
+}

@@ -1,0 +1,13 @@
+{
+    "name":"LeNet5",
+    "steps":[   
+        {"type":"Conv2D",   "filters":6, "kernel-size":[3,3], "activation":"relu"}, 
+        {"type":"AveragePooling2D"}, 
+        {"type":"Conv2D",   "filters":16, "kernel-size":[3,3], "activation":"relu"},
+        {"type":"AveragePooling2D"},  
+        {"type":"Flatten"}, 
+        {"type":"Dense",    "units":120,  "activation":"relu"},
+        {"type":"Dense",    "units":84,   "activation":"relu"},
+        {"type":"Dense",    "units":3,   "activation":"softmax"}
+    ]
+}

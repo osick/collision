@@ -14,16 +14,16 @@ There are 5 steps to use it correctly
 
 1. After downloading the whole repository, unpack the file full.zip in the data directory
 
-2. Shuffle the data by `$ collision.py --shuffle`
+2. Shuffle the data by `$ mainCollision.py --shuffle`
 
-3. The model has to be trained `$ collision.py --training`
+3. The model has to be trained `$ mainCollision.py --training`
 
-4. The model has to be tested `$ collision.py --testing`
+4. The model has to be tested `$ mainCollision.py --testing`
    testing determines the quality of the trained model. Output is a dictionary with the summary of correct and false detections per category (in, out, collision). The only prerequisite for this option is that the model has been trained before (e.g by using the --training option). 
-   The commands can also be combined, e.g `$ collision.py --shuffle --trainig --testing --predict`
+   The commands can also be combined, e.g `$ mainCollision.py --shuffle --trainig --testing --predict`
 
 5. The model can now be used to make prediction (remember the image should have resolution  540 x 540 x 3) 
-  `$ collision.py --predict '/path/to/the/image' `
+  `$ mainCollision.py --predict '/path/to/the/image' `
 
 The whole commands are given by the following:
 
@@ -44,6 +44,9 @@ optional arguments:
   --predict PREDICT  prints the prediction array for an image to stdout
   --verbose          more verbose output to stdout
 ```
+
+## Licence
+[GNU General Public License v3.0](COPYING)
 
 ## Credits
 Credits go to
