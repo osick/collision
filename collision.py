@@ -91,18 +91,19 @@ class collisionData():
 
 class collisionModel():
 
-    def __init__(self,cd, modelConf):
+    def __init__(self,cd, modelConf, model_path="models"):
         self.cData = cd
         self.dataConfiguration={"percentage":{"train":0.75,"val":0.15,"test":0.1}}
         self.stages = {stage:os.path.join(self.cData.data_path,stage) for stage in ["train","val","test"]}
         self.modelConfiguration = modelConf
-        self.model_path = "models"
-        if not os.path.isdir(self.model_path): os.mkdir(self.model_path)
-        self.model_filepath = os.path.join(self.model_path,"model"+self.modelConfiguration['name']+".h5")
-        self.weights_filepath = os.path.join(self.model_path,"weights"+self.modelConfiguration['name']+".h5")
+        self.model_path = model_path
+        if not os.path.isdir(self.model_path): 
+            os.mkdir(self.model_path)
+        self.model_filepath     = os.path.join(self.model_path,self.modelConfiguration['name']+"-cnn.h5")
+        self.weights_filepath   = os.path.join(self.model_path,self.modelConfiguration['name']+"-weight.h5")
         
     def initModel(self):    
-        ''' LeNet-5 type CNN model'''
+        ''' LeNet-5 type CNN model generator, using self.modelConfiguration as a serialization of a sequential CNN'''
         # init sequential model
         self.model=Sequential()
         #loop the modelconfiguration["steps"]

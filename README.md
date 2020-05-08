@@ -1,5 +1,5 @@
 # Collision
-![collisions](banner.jpg)
+![collisions](dpcs/banner.jpg)
 
 **Collision** is a simple proof of concept of a neural network detecting collsions of bodies. In this setup it can reach an accuracy of about 98% which sounds good, but in fact is not good enough remembering self driving cars ...  
 
@@ -43,7 +43,7 @@ There are 5 steps to use it:
 
 1. Shuffle the data by `$ main.py --shuffle`
 
-2. The model has to be trained `$ main.py --training`. You can define an own model using the --model attribut. Default ist Conf95. See [Conf95.model])Conf95.model). This model definition file is a very simple parametrizsation file for a convolutional neural network (CNN).
+2. The model has to be trained `$ main.py --training`. You can define an own model using the `--model <modelname>` attribut. Default value ist Conf95. All models are storde in models dir with extension `.model` See [Conf95.model](models/Conf95.model). This model definition file is a very simple parametrizsation file for a convolutional neural network (CNN). This is a poor man attempt for a cofiguration of modelling...
 
 3. The model has to be tested `$ main.py --testing`
    testing determines the quality of the trained model. Output is a dictionary with the summary of correct and false detections per category (in, out, collision). The only prerequisite for this option is that the model has been trained before (e.g by using the --training option). 
@@ -57,5 +57,5 @@ There are 5 steps to use it:
 [GNU General Public License v3.0](COPYING)
 
 ## Credits
-* [Blender](http://blender.org) offering this georguous program
+* [Blender](http://blender.org), great application for image generation
 * Credits go also to my son, who generated the images 
