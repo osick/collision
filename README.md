@@ -1,5 +1,5 @@
 # Collision
-![collisions](dpcs/banner.jpg)
+![collisions](docs/banner.jpg)
 
 **Collision** is a simple proof of concept of a neural network detecting collsions of bodies. In this setup it can reach an accuracy of about 98% which sounds good, but in fact is not good enough remembering self driving cars ...  
 
