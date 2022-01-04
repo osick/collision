@@ -40,23 +40,23 @@ optional arguments:
 ```
 There are 5 steps to use it:
 
-0. After downloading the whole repository, unpack the file full.zip in the data directory
+0. Downloading the whole repository, 
+1. Download full.zip and put it in the top directory of the project
 
-1. Shuffle the data by `$ main.py --shuffle`
+1. Shuffle the data by `$ python main.py --shuffle`
 
-2. The model has to be trained `$ main.py --training`. You can define an own model using the `--model <modelname>` attribut. Default value ist Conf95. All models are storde in models dir with extension `.model` See [Conf95.model](models/Conf95.model). This model definition file is a very simple parametrizsation file for a convolutional neural network (CNN). This is a poor man attempt for a cofiguration of modelling...
+2. The model has to be trained `$ python main.py --training`. You can define an own model using the `--model <modelname>` attribut. Default value ist Conf95. All models are storde in models dir with extension `.model` See [Conf95.model](models/Conf95.model). This model definition file is a very simple parametrizsation file for a convolutional neural network (CNN). This is a poor man attempt for a cofiguration of modelling...
 
-3. The model has to be tested `$ main.py --testing`
+3. The model has to be tested `$ python main.py --testing`
    testing determines the quality of the trained model. Output is a dictionary with the summary of correct and false detections per category (in, out, collision). The only prerequisite for this option is that the model has been trained before (e.g by using the --training option). 
-   The commands can also be combined, e.g `$ main.py --shuffle --trainig --testing --predict`
+   The commands can also be combined, e.g `$ python main.py --shuffle --trainig --testing --predict`
 
 4. The model can now be used to make prediction (remember the image should have resolution  540 x 540 x 3) 
-  `$ main.py --predict '/path/to/the/image' `
+  `$ python main.py --predict '/path/to/the/image' `
 
 
 ## Licence
 [GNU General Public License v3.0](COPYING)
 
 ## Credits
-* [Blender](http://blender.org), great application for image generation
-* Credits go also to my son, who generated the images 
+* Credits go to my son, who helped me a lot generating the image dataset **full.zip** using [Blender](http://blender.org)
