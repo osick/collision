@@ -1,8 +1,8 @@
 
-import sys
 import os
 import argparse
 import json
+import collision
 
 
 if __name__ == "__main__":
@@ -15,11 +15,11 @@ if __name__ == "__main__":
     parser.add_argument("--testing",     help="call the testing function",                  action="store_true")
     parser.add_argument("--predict",     help="compute the prediction of an image", type=str)
     args=parser.parse_args()
+    
     # determines which routine shold be done 
     if not (args.training or args.testing or args.shuffle or args.predict): 
         parser.print_help()
     else:
-        import collision
         model_path="models"
         with open(os.path.join(model_path, args.model+".model"),"r") as m: 
             mdl=json.load(m)
