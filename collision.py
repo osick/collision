@@ -25,13 +25,9 @@ import re
 
 
 # some AI libs
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
-from sklearn import datasets
 from keras.preprocessing.image import ImageDataGenerator, load_img, img_to_array
-from keras import optimizers
 from keras.models import Sequential, load_model
-from keras.layers import Dropout, Flatten, Dense, Activation
+from keras.layers import Dropout, Flatten, Dense
 from keras.layers.convolutional import Conv2D, MaxPooling2D, AveragePooling2D
 from keras import callbacks
 
@@ -71,7 +67,7 @@ class collisionData():
     def shuffle(self, percentages):
         ''' separating img data in three different sub dirs: "train", "val", "test", the size of these sample sets is given by the relevant args '''
 
-        #if not os.path.isfile(".prepared"): self.prepare(percentages) # prepare Data only on first usage
+        if not os.path.isfile(".prepared"): self.prepare(percentages) # prepare Data only on first usage
         for category in self.categories:
             source_path=os.path.join(self.data_path,"full",category)
             files = [f for f in os.listdir(source_path)]
@@ -123,7 +119,7 @@ class collisionModel():
         # compile the model        
         self.model.compile(loss='categorical_crossentropy',optimizer="adam",metrics=['accuracy'])
 
-    def training(self,epochs=10, cleanupBefore=True):
+    def training(self,epochs=10):
         ''' train the model'''
 
         # cleanup old data
@@ -143,7 +139,7 @@ class collisionModel():
         val_generator   = val_datagen.flow_from_directory(self.stages["val"], target_size=(self.cData.img_data["img_width"], self.cData.img_data["img_height"]), batch_size=32, class_mode='categorical')
         self.initModel()
         tensorboard_callback = callbacks.TensorBoard(log_dir=log_path)
-        self.model.fit_generator(train_generator, samples_per_epoch=2000, epochs=epochs, validation_data=val_generator, validation_steps=32,callbacks=[tensorboard_callback])
+        self.model.fit_generator(train_generator, steps_per_epoch=2000, epochs=epochs, validation_data=val_generator, validation_steps=32,callbacks=[tensorboard_callback])
         self.model.save(self.model_filepath)
         self.model.save_weights(self.weights_filepath)
 
