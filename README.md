@@ -1,7 +1,8 @@
 # Collision
 ![collisions](docs/banner.jpg)
 
-**Collision** is a simple proof of concept of a neural network detecting collsions of bodies. In this setup it can reach an accuracy of about 98% which sounds good, but in fact is not good enough remembering self driving cars ...  
+**Collision** is a simple **proof of concept** of a neural network detecting collsions of bodies (see the images above). 
+In this setup it can reach an accuracy of about 98% which sounds good, but in fact is not good enough remembering self driving cars ...  
 
 For training, validation and testing it uses abstract Blender generated images (size: 540 x 540 x 3) of cubes. 
 
